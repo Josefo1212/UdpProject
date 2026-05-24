@@ -3,7 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-// Emulación de __dirname requerida para entornos ES Modules
+// Emulación de __dirname requerida para entornos ES Modules..
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
