@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Streaming UDP - Cliente</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="page">
+      <header class="hero">
+        <p class="badge">Proyecto de Redes - Capa UDP</p>
+        <h1>Cliente de Streaming UDP</h1>
+        <p class="subtitle">
+          Reproduccion en navegador con proxy HTTP y almacenamiento UDP.
+        </p>
+      </header>
+
+      <section class="panel">
+        <div class="row">
+          <label for="videoSelect">Selecciona un video</label>
+          <select id="videoSelect" aria-label="Lista de videos">
+            <option value="">Cargando...</option>
+          </select>
+        </div>
+        <div class="row helper">
+          <span id="status">Listo para reproducir.</span>
+        </div>
+        <p class="note">Formatos de prueba: .mp4, .mkv, .avi, .mov</p>
+        <div class="player">
+          <video id="player" controls preload="metadata"></video>
+        </div>
+      </section>
+
+      <footer class="footer">
+        <span>Integrante 3 - Frontend & QA</span>
+      </footer>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
