@@ -59,6 +59,18 @@ app.get('/api/stream', (req, res) => {
   });
 
   const udpClient = dgram.createSocket('udp4');
+  let lastUdpAt = Date.now();
+  let watchdogId = null;
+
+  const cleanup = () => {
+    if (watchdogId) {
+      clearInterval(watchdogId);
+      watchdogId = null;
+    }
+    try {
+      udpClient.close();
+    } catch (e) {}
+  };
 
   // [ ] Orquestación de FFmpeg vía child_process.spawn
   const ffmpeg = spawn('ffmpeg', [
@@ -76,15 +88,54 @@ app.get('/api/stream', (req, res) => {
     res.write(chunk); // Escribir en el stream de respuesta al navegador
   });
 
+  ffmpeg.on('error', (err) => {
+    console.error(`[Proxy] FFmpeg no pudo iniciarse: ${err.message}`);
+    if (!res.headersSent) {
+      res.status(500).send('FFmpeg no disponible en el servidor');
+    } else {
+      res.end();
+    }
+    cleanup();
+  });
+
+  ffmpeg.stderr.on('data', (chunk) => {
+    const message = chunk.toString().trim();
+    if (message) {
+      console.error(`[FFmpeg] ${message}`);
+    }
+  });
+
+  ffmpeg.on('close', (code) => {
+    if (!res.writableEnded) {
+      res.end();
+    }
+    if (code !== 0) {
+      console.error(`[Proxy] FFmpeg cerró con código ${code}`);
+    }
+    cleanup();
+  });
+
   // Tuberías de Datos: UDP -> FFmpeg
   udpClient.on('message', (msg) => {
+    lastUdpAt = Date.now();
     if (msg.toString() === 'EOF') {
       ffmpeg.stdin.end(); // Notificar a FFmpeg que no hay más datos
-      udpClient.close();
+      cleanup();
     } else {
       ffmpeg.stdin.write(msg); // Inyectar fragmentos UDP crudos a FFmpeg
     }
   });
+
+  watchdogId = setInterval(() => {
+    if (Date.now() - lastUdpAt > 5000) {
+      console.error('[Proxy] Timeout esperando datos UDP');
+      ffmpeg.stdin.end();
+      if (!res.writableEnded) {
+        res.end();
+      }
+      cleanup();
+    }
+  }, 1000);
 
   // Solicitar el flujo de datos al Integrante 1
   const streamCommand = Buffer.from(JSON.stringify({ type: 'STREAM', video: videoName }));
@@ -94,9 +145,7 @@ app.get('/api/stream', (req, res) => {
   req.on('close', () => {
     console.log(`[Proxy] Conexión cerrada. Limpiando subproceso de ${videoName}`);
     ffmpeg.kill('SIGKILL'); // Evitar hilos zombies
-    try {
-      udpClient.close(); // Evitar fugas en puertos UDP
-    } catch (e) {}
+    cleanup();
   });
 });
 

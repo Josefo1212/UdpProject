@@ -69,24 +69,37 @@ server.on('message', (msg, rinfo) => {
           fileStream.destroy();
           return;
         }
-        fileStream.resume();
+        // Pace UDP datagrams to avoid overwhelming downstream buffers.
+        setTimeout(() => fileStream.resume(), 1);
       });
     });
 
     fileStream.on('end', () => {
-      server.send(Buffer.from('EOF'), rinfo.port, rinfo.address);
+      const eofPayload = Buffer.from('EOF');
+      for (let attempt = 0; attempt < 3; attempt += 1) {
+        setTimeout(() => {
+          server.send(eofPayload, rinfo.port, rinfo.address);
+        }, attempt * 50);
+      }
     });
 
     fileStream.on('error', (err) => {
       console.error(`Stream error: ${err.message}`);
-      server.send(Buffer.from('EOF'), rinfo.port, rinfo.address);
+      const eofPayload = Buffer.from('EOF');
+      for (let attempt = 0; attempt < 3; attempt += 1) {
+        setTimeout(() => {
+          server.send(eofPayload, rinfo.port, rinfo.address);
+        }, attempt * 50);
+      }
     });
   }
 });
 
 server.on('error', (err) => {
   console.error(`Socket error:\n${err.stack}`);
-  server.close();
+  if (err.code === 'EADDRINUSE') {
+    server.close();
+  }
 });
 
 server.bind(OPTIONS.port, OPTIONS.host);

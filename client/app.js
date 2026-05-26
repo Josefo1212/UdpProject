@@ -7,18 +7,6 @@ function setStatus(message) {
   statusEl.textContent = message;
 }
 
-function getMimeType(filename) {
-  const ext = filename.split(".").pop().toLowerCase();
-  const mimeByExt = {
-    mp4: "video/mp4",
-    mov: "video/quicktime",
-    mkv: "video/x-matroska",
-    avi: "video/x-msvideo"
-  };
-
-  return mimeByExt[ext] || "";
-}
-
 async function loadVideos() {
   try {
     setStatus("Cargando lista de videos...");
@@ -61,15 +49,13 @@ videoSelect.addEventListener("change", () => {
   const source = `${API_BASE}/api/stream?video=${encodeURIComponent(selected)}`;
   player.src = source;
   player.load();
-  player.play().catch(() => {
-    setStatus("Presiona reproducir para iniciar.");
-  });
-  const mime = getMimeType(selected);
-  if (mime && player.canPlayType(mime) === "") {
-    setStatus("Formato detectado, puede no ser compatible con el navegador.");
-    return;
-  }
-  setStatus(`Reproduciendo: ${selected}`);
+  player.play()
+    .then(() => {
+      setStatus(`Reproduciendo y transcodificando en tiempo real: ${selected}`);
+    })
+    .catch(() => {
+      setStatus("Presiona reproducir para iniciar.");
+    });
 });
 
 loadVideos();
