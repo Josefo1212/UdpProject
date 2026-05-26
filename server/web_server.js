@@ -12,8 +12,15 @@ const HTTP_PORT = 3000;
 const UDP_SERVER_PORT = 5001;
 const UDP_HOST = '127.0.0.1';
 
+app.use((req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', '*'); // Permite cualquier origen
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  next();
+});
+
 // [ ] Arquitectura del Servidor Web: Enlace a la carpeta del Integrante 3
-const clientPath = path.join(__dirname, '../cliente');
+const clientPath = path.join(__dirname, '../client');
 app.use(express.static(clientPath));
 
 // [ ] Puente de Control (/api/videos): Traducción HTTP-UDP

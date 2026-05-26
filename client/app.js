@@ -1,6 +1,7 @@
 const videoSelect = document.getElementById("videoSelect");
 const player = document.getElementById("player");
 const statusEl = document.getElementById("status");
+const API_BASE = "http://localhost:3000";
 
 function setStatus(message) {
   statusEl.textContent = message;
@@ -21,7 +22,7 @@ function getMimeType(filename) {
 async function loadVideos() {
   try {
     setStatus("Cargando lista de videos...");
-    const response = await fetch("/api/videos");
+    const response = await fetch(`${API_BASE}/api/videos`);
     if (!response.ok) {
       throw new Error("Respuesta invalida del servidor");
     }
@@ -57,7 +58,7 @@ videoSelect.addEventListener("change", () => {
     return;
   }
 
-  const source = `/api/stream?video=${encodeURIComponent(selected)}`;
+  const source = `${API_BASE}/api/stream?video=${encodeURIComponent(selected)}`;
   player.src = source;
   player.load();
   player.play().catch(() => {

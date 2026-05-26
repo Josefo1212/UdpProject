@@ -69,7 +69,7 @@ server.on('message', (msg, rinfo) => {
           fileStream.destroy();
           return;
         }
-        setTimeout(() => fileStream.resume(), 1);
+        fileStream.resume();
       });
     });
 
