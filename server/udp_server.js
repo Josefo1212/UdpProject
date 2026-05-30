@@ -20,6 +20,15 @@ if (!fs.existsSync(VIDEO_DIR)) {
 
 const server = dgram.createSocket('udp4');
 
+const sendEof = (port, address) => {
+  const eofPayload = Buffer.from('EOF');
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    setTimeout(() => {
+      server.send(eofPayload, port, address);
+    }, attempt * 50);
+  }
+};
+
 server.on('listening', () => {
   const address = server.address();
   console.log(`UDP storage server listening on ${address.address}:${address.port}`);
@@ -75,22 +84,12 @@ server.on('message', (msg, rinfo) => {
     });
 
     fileStream.on('end', () => {
-      const eofPayload = Buffer.from('EOF');
-      for (let attempt = 0; attempt < 3; attempt += 1) {
-        setTimeout(() => {
-          server.send(eofPayload, rinfo.port, rinfo.address);
-        }, attempt * 50);
-      }
+      sendEof(rinfo.port, rinfo.address);
     });
 
     fileStream.on('error', (err) => {
       console.error(`Stream error: ${err.message}`);
-      const eofPayload = Buffer.from('EOF');
-      for (let attempt = 0; attempt < 3; attempt += 1) {
-        setTimeout(() => {
-          server.send(eofPayload, rinfo.port, rinfo.address);
-        }, attempt * 50);
-      }
+      sendEof(rinfo.port, rinfo.address);
     });
   }
 });

@@ -3,11 +3,11 @@ const player = document.getElementById("player");
 const statusEl = document.getElementById("status");
 const API_BASE = "http://localhost:3000";
 
-function setStatus(message) {
+const setStatus = (message) => {
   statusEl.textContent = message;
-}
+};
 
-async function loadVideos() {
+const loadVideos = async () => {
   try {
     setStatus("Cargando lista de videos...");
     const response = await fetch(`${API_BASE}/api/videos`);
@@ -39,16 +39,17 @@ async function loadVideos() {
 
 videoSelect.addEventListener("change", () => {
   const selected = videoSelect.value;
+  const source = selected
+    ? `${API_BASE}/api/stream?video=${encodeURIComponent(selected)}`
+    : "";
+  player.src = source;
+  player.load();
+
   if (!selected) {
-    player.removeAttribute("src");
-    player.load();
     setStatus("Selecciona un video para comenzar.");
     return;
   }
 
-  const source = `${API_BASE}/api/stream?video=${encodeURIComponent(selected)}`;
-  player.src = source;
-  player.load();
   player.play()
     .then(() => {
       setStatus(`Reproduciendo y transcodificando en tiempo real: ${selected}`);
